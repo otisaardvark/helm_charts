@@ -31,7 +31,7 @@ spec:
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
           - name: http
-            containerConfigPort: 30000
+            containerPort: 30000
             protocol: TCP
         livenessProbe:
           {{- if or (.Values.foundryConfig.username) (.Values.foundryConfig.release_url) }}
