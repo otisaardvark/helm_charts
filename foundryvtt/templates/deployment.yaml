@@ -1,0 +1,239 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "foundryVtt.fullname" . }}
+  labels:
+    {{- include "foundryVtt.labels" . | nindent 4 }}
+spec:
+  strategy:
+    type: Recreate
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "foundryVtt.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "foundryVtt.selectorLabels" . | nindent 8 }}
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      serviceAccountName: {{ include "foundryVtt.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+      - name: {{ .Chart.Name }}
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 12 }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+          - name: http
+            containerConfigPort: 30000
+            protocol: TCP
+        livenessProbe:
+          {{- if or (.Values.foundryConfig.username) (.Values.foundryConfig.release_url) }}
+          initialDelaySeconds: 600
+          failureThreshold: 40
+          periodSeconds: 25
+          {{- end }}
+          httpGet:
+            path: /
+            port: http
+        readinessProbe:
+          initialDelaySeconds: 30
+          httpGet:
+            path: /
+            port: http
+        resources:
+          {{- toYaml .Values.resources | nindent 12 }}
+        env:
+          {{- if .Values.containerConfig.cache }}
+          - name: CONTAINER_CACHE
+            value: {{ .Values.containerConfig.cache }}
+          {{- end }}
+          {{- if .Values.containerConfig.gid }}
+          - name: FOUNDRY_GID
+            value: {{ .Values.containerConfig.gid | quote }}
+          {{- end }}
+          {{- if .Values.containerConfig.patches }}
+          - name: CONTAINER_PATCHES
+            value: {{ .Values.containerConfig.patches }}
+          {{- end }}
+          {{- if .Values.containerConfig.patchUrls }}
+          - name: CONTAINER_PATCH_URLS
+            value: {{ join " " .Values.containerConfig.patchUrls }}
+          {{- end }}
+          {{- if .Values.containerConfig.preserveConfig }}
+          - name: CONTAINER_PRESERVE_CONFIG
+            value: {{ .Values.containerConfig.preserveConfig | quote }}
+          {{- end }}
+          {{- if .Values.containerConfig.preserveOwner }}
+          - name: CONTAINER_PRESERVE_OWNER
+            value: {{ .Values.containerConfig.preserveOwner }}
+          {{- end }}
+          {{- if .Values.containerConfig.timezone }}
+          - name: TIMEZONE
+            value: {{ .Values.containerConfig.timezone }}
+          {{- end }}
+          {{- if .Values.containerConfig.uid }}
+          - name: FOUNDRY_UID
+            value: {{ .Values.containerConfig.uid | quote }}
+          {{- end }}
+          {{- if .Values.containerConfig.verbose }}
+          - name: CONTAINER_VERBOSE
+            value: {{ .Values.containerConfig.verbose | quote }}
+          {{- end }}
+          # Foundry fetch files only
+          {{- if .Values.foundryConfig.username }}
+          - name: FOUNDRY_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: {{ template "foundryVtt.fullname" . }}
+                key: username
+          {{- end }}
+          {{- if .Values.foundryConfig.password }}
+          - name: FOUNDRY_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ template "foundryVtt.fullname" . }}
+                key: password
+          {{- end }}
+          {{- if .Values.foundryConfig.release_url }}
+          - name: FOUNDRY_RELEASE_URL
+            value: {{ .Values.foundryConfig.release_url }}
+          {{- end }}
+          # foundry configuration files
+          - name: FOUNDRY_ADMIN_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{ template "foundryVtt.fullname" . }}
+                key: adminKey
+          {{- if .Values.foundryConfig.hostname }}
+          - name: FOUNDRY_HOSTNAME
+            value: {{ .Values.foundryConfig.hostname }}
+          {{- end }}
+          {{- if .Values.foundryConfig.language }}
+          - name: FOUNDRY_LANGUAGE
+            value: {{ .Values.foundryConfig.language }}
+          {{- end }}
+          {{- if .Values.foundryConfig.license_key }}
+          - name: FOUNDRY_LICENSE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{ template "foundryVtt.fullname" . }}
+                key: license_key
+          {{- end }}
+          {{- if .Values.foundryConfig.minifyStaticFiles }}
+          - name: FOUNDRY_MINIFY_STATIC_FILES
+            value: {{ .Values.foundryConfig.minifyStaticFiles | quote }}
+          {{- end }}
+          {{- if .Values.foundryConfig.proxyPort }}
+          - name: FOUNDRY_PROXY_PORT
+            value: {{ .Values.foundryConfig.proxyPort | quote }}
+          {{- end }}
+          {{- if .Values.foundryConfig.proxySSL }}
+          - name: FOUNDRY_PROXY_SSL
+            value: {{ .Values.foundryConfig.proxySSL | quote }}
+          {{- end }}
+          {{- if .Values.foundryConfig.routePrefix }}
+          - name: FOUNDRY_ROUTE_PREFIX
+            value: {{ .Values.foundryConfig.routePrefix }}
+          {{- end }}
+          {{- if eq .Values.foundryConfig.s3.awsConfig "true" -}}
+          - name: FOUNDRY_AWS_CONFIG
+            value: "true"
+          {{- else if eq .Values.foundryConfig.s3.awsConfig "file" -}}
+          - name: FOUNDRY_AWS_CONFIG
+            value: "/etc/secretaws/aws-credentials.json"
+          {{- end }}
+          {{- if .Values.foundryConfig.sslCert }}
+          - name: FOUNDRY_SSL_CERT
+            value: {{ .Values.foundryConfig.sslCert }}
+          {{- end }}
+          {{- if .Values.foundryConfig.sslKey }}
+          - name: FOUNDRY_SSL_KEY
+            value: {{ .Values.foundryConfig.sslKey }}
+          {{- end }}
+          {{- if .Values.foundryConfig.turnConfigs }}
+          - name: FOUNDRY_TURN_CONFIGS
+            valueFrom:
+              secretKeyRef:
+                name: {{ template "foundryVtt.fullname" . }}-turn-configs
+                key: turnConfigs.json
+          {{- end }}
+          {{- if .Values.foundryConfig.turnMaxPort }}
+          - name: FOUNDRY_TURN_MAX_PORT
+            value: {{ .Values.foundryConfig.turnMaxPort | quote }}
+          {{- end }}
+          {{- if .Values.foundryConfig.upnp }}
+          - name: FOUNDRY_UPNP
+            value: {{ .Values.foundryConfig.upnp }}
+          {{- end }}
+          {{- if .Values.foundryConfig.version }}
+          - name: FOUNDRY_VERSION
+            value: {{ .Values.foundryConfig.version | quote }}
+          {{- end }}
+          {{- if .Values.foundryConfig.world }}
+          - name: FOUNDRY_WORLD
+            value: {{ .Values.foundryConfig.world | quote }}
+          {{- end }}
+        volumeMounts:
+        - name: data
+          mountPath: /data
+      {{- if eq .Values.persistence.shared.enabled true }}
+        {{- range $i, $mount := .Values.persistence.shared.mounts }}
+        - name: {{ printf "%s-%s" "shared" ($i|toString) }}
+          mountPath: {{ printf "%s%s" "/data/Data" $mount.containerPath }}
+          readOnly: {{ $mount.readOnly }}
+        {{- end }}
+      {{- end }}
+      {{- if eq .Values.foundryConfig.s3.awsConfig "file" }}
+        - name: secret-aws
+          mountPath: "/etc/secretaws/"
+          readOnly: true
+      {{- end }}
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      volumes:
+    {{- if eq .Values.foundryConfig.s3.awsConfig "file" }}
+      - name: secret-aws
+        secret:
+          secretName: {{ include "foundryVtt.fullname" . }}-aws
+    {{- end }}
+      - name: data
+    {{- if and (eq .Values.persistence.bind.enabled true) (eq .Values.persistence.dataDir.enabled false) }}
+        hostPath:
+          path: {{ .Values.persistence.bind.hostpath }}
+          type: Directory
+    {{- else if .Values.persistence.dataDir.enabled }}
+        persistentVolumeClaim:
+          claimName: {{ template "foundryVtt.fullname" . }}
+    {{- else }}
+        emptyDir: {}
+    {{- end }}
+    {{- if eq .Values.persistence.shared.enabled true }}
+      {{- range $i, $mount := .Values.persistence.shared.mounts }}
+      - name: {{ printf "%s-%s" "shared" ($i|toString) }}
+        {{ if eq $mount.type "bind" }}
+        hostPath:
+          path: {{ $mount.hostPath }}
+          type: Directory
+        {{ else if eq $mount.type "pvc" }}
+        persistentVolumeClaim:
+          claimName: {{ $mount.claimName }}
+        {{ end }}
+      {{- end }}
+    {{- end }}

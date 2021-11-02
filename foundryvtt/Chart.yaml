@@ -1,0 +1,15 @@
+apiVersion: v2
+name: foundryvtt
+description: Foundry Virtual Tabletop
+type: application
+version: 0.1.0
+appVersion: 0.8.9
+keywords:
+  - vtt
+  - foundryvtt
+  - foundry
+sources:
+  - https://github.com/otisaardvark/charts/foundryvtt
+maintainers:
+  - name: otisaardvark
+    email: otisaardvark@gmail.com
