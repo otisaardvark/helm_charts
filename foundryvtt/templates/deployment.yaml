@@ -168,7 +168,7 @@ spec:
           {{- end }}
           {{- if .Values.foundryConfig.upnp }}
           - name: FOUNDRY_UPNP
-            value: {{ .Values.foundryConfig.upnp }}
+            value: {{ .Values.foundryConfig.upnp | quote }}
           {{- end }}
           {{- if .Values.foundryConfig.version }}
           - name: FOUNDRY_VERSION

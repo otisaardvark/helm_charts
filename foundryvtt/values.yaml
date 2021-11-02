@@ -54,11 +54,11 @@ resources:
 service:
   serviceType: NodePort
   port: 30000
-  nodePort: 5001
+  nodePort: 30000
   protocol: TCP
   labels: {}
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: vtt.ardware.net
+    external-dns.alpha.kubernetes.io/hostname: foundry.domain.com
 
 #--------------------------------------------------------------------------------------------
 # Persistance
@@ -71,8 +71,8 @@ persistence:
   ## when storageClass for PV is enable this is automatically disabled
   ## To use bind.enabled == true and dataDir.enabled == false
   bind:
-    enabled: false
-    hostpath: /kubdata/foundry_vtt/foundry_data
+    enabled: true
+    hostpath: /path_to_host_data_folder
 
   ## If defined, storageClassName: <storageClass>
   ## If set to "-", storageClassName: "", which disables dynamic provisioning
@@ -159,10 +159,10 @@ foundryConfig:
   
   ## Account username or email address for foundryvtt.com. Required for downloading an 
   ## application distribution.
-  # username:
+  username: [YOUR_FOUNDRY_USERNAME]
 
   ## Account password for foundryvtt.com. Required for downloading an application distribution.
-  # password:
+  password: [YOUR_FOUNDRY_PASSWORD]
 
   ##  S3 pre-signed URL generate from the user's profile.  Required for downloading an 
   ## application distribution.
@@ -172,7 +172,7 @@ foundryConfig:
   ## key will be fetched when using account authentication. If multiple license keys are
   ## associated with an account, one will be chosen at random. Specific licenses can be
   ## selected by passing in an integer index. The first license key being 1.
-  # license_key:
+  license_key: [YOUR_FOUNDRY_LICENCE]
 
   ## Admin password. Default: admin
   adminKey: admin
@@ -180,11 +180,11 @@ foundryConfig:
   ## A custom hostname to use in place of the host machine's public IP address when
   ## displaying the address of the game session. This allows for reverse proxies or DNS
   ## servers to modify the public address.
-  hostname: "vtt.ardware.net"
+  hostname: "foundry.domain.com"
 
   ## The default application language and module which provides the core translation 
   ## files. Default is "en.core"
-  language: en.core
+  language: "en.core"
 
   ## Set to `true` to reduce network traffic by serving minified static JavaScript and CSS
   ## files.  Enabling this setting is recommended for most users, but module developers may wish
@@ -204,12 +204,12 @@ foundryConfig:
   ## A string path which is appended to the base hostname to serve Foundry VTT content from
   ## a specific namespace. For example setting this to demo will result in data being served
   ## from http://x.x.x.x:30000/demo/.
-  routePrefix: 
+  # routePrefix: 
 
   ## Credentials for generate the [awsConfig.json](https://foundryvtt.com/article/aws-s3/) 
   ## or `true` for AWS environment variable [credentials evaluation](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/setting-credentials-node.html) usage.
   s3:
-    awsConfig: ""
+    awsConfig: "false"
     # To use the inline credentials and generate "awsConfig.json" use: awsConfig: file
     # aws_access_key_id: *************
     # aws_region: eu-west-1
