@@ -86,7 +86,6 @@ spec:
           - name: CONTAINER_VERBOSE
             value: {{ .Values.containerConfig.verbose | quote }}
           {{- end }}
-          # Foundry fetch files only
           {{- if .Values.foundryConfig.username }}
           - name: FOUNDRY_USERNAME
             valueFrom:
@@ -105,7 +104,6 @@ spec:
           - name: FOUNDRY_RELEASE_URL
             value: {{ .Values.foundryConfig.release_url }}
           {{- end }}
-          # foundry configuration files
           - name: FOUNDRY_ADMIN_KEY
             valueFrom:
               secretKeyRef:
